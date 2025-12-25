@@ -1,0 +1,26 @@
+# AWS CDK and Lambda Dependencies
+aws-cdk-lib==2.100.0
+constructs>=10.0.0,<11.0.0
+
+# AWS SDK for Python
+boto3==1.34.0
+botocore==1.34.0
+
+# JWT handling for Cognito
+PyJWT==2.8.0
+cryptography==41.0.7
+requests==2.31.0
+
+# Testing
+pytest==7.4.3
+pytest-mock==3.12.0
+moto==4.2.14
+
+# Utilities
+python-dateutil==2.8.2
+uuid==1.30
+
+# Development
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1

@@ -1,0 +1,155 @@
+{
+  "LambdaExecutionPolicy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ],
+        "Resource": "arn:aws:logs:*:*:*"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
+        ],
+        "Resource": [
+          "arn:aws:dynamodb:*:*:table/SaaSAppTable",
+          "arn:aws:dynamodb:*:*:table/SaaSAppTable/index/*"
+        ],
+        "Condition": {
+          "ForAllValues:StringLike": {
+            "dynamodb:LeadingKeys": [
+              "TENANT#${aws:userid}"
+            ]
+          }
+        }
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "events:PutEvents"
+        ],
+        "Resource": "arn:aws:events:*:*:event-bus/saas-backend-events"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ],
+        "Resource": "arn:aws:s3:::saas-backend-assets-*/*",
+        "Condition": {
+          "StringLike": {
+            "s3:prefix": [
+              "${aws:userid}/*"
+            ]
+          }
+        }
+      }
+    ]
+  },
+  "CognitoUserPoolPolicy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "cognito-idp:AdminGetUser",
+          "cognito-idp:AdminListGroupsForUser",
+          "cognito-idp:ListUsers"
+        ],
+        "Resource": "arn:aws:cognito-idp:*:*:userpool/*"
+      }
+    ]
+  },
+  "EventBridgePolicy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "events:PutEvents"
+        ],
+        "Resource": "arn:aws:events:*:*:event-bus/saas-backend-events"
+      },
+      {
+        "Effect": "Allow",
+        "Action": [
+          "lambda:InvokeFunction"
+        ],
+        "Resource": "arn:aws:lambda:*:*:function:*TaskCreatedHandler*"
+      }
+    ]
+  },
+  "APIGatewayPolicy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Effect": "Allow",
+        "Action": [
+          "lambda:InvokeFunction"
+        ],
+        "Resource": [
+          "arn:aws:lambda:*:*:function:*CreateTask*",
+          "arn:aws:lambda:*:*:function:*ListTasks*",
+          "arn:aws:lambda:*:*:function:*UpdateTask*",
+          "arn:aws:lambda:*:*:function:*DeleteTask*",
+          "arn:aws:lambda:*:*:function:*Authorizer*"
+        ]
+      }
+    ]
+  },
+  "TenantIsolationPolicy": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "DenyAccessToOtherTenants",
+        "Effect": "Deny",
+        "Action": [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:Query"
+        ],
+        "Resource": "arn:aws:dynamodb:*:*:table/SaaSAppTable",
+        "Condition": {
+          "ForAllValues:StringNotLike": {
+            "dynamodb:LeadingKeys": [
+              "TENANT#${saml:tenant_id}",
+              "TENANT#${cognito-identity.amazonaws.com:tenant_id}"
+            ]
+          }
+        }
+      },
+      {
+        "Sid": "DenyS3AccessToOtherTenants",
+        "Effect": "Deny",
+        "Action": [
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ],
+        "Resource": "arn:aws:s3:::saas-backend-assets-*/*",
+        "Condition": {
+          "StringNotLike": {
+            "s3:prefix": [
+              "${saml:tenant_id}/*",
+              "${cognito-identity.amazonaws.com:tenant_id}/*"
+            ]
+          }
+        }
+      }
+    ]
+  }
+}
